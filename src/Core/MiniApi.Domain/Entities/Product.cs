@@ -17,3 +17,4 @@ public class Product:BaseEntity
     public ICollection<Review>? Reviews { get; set; }
     public ICollection<OrderProduct>? OrderProducts { get; set; }
 }
+
