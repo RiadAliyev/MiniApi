@@ -10,13 +10,13 @@ public class OrderProductConfiguration : IEntityTypeConfiguration<OrderProduct>
     {
         builder.ToTable("OrderProducts");
 
-        
-        builder.HasKey(x => new {x.OrderId,x.ProductId});
+        builder.HasKey(x => new { x.OrderId, x.ProductId });
+       
 
         builder.HasOne(x => x.Order)
             .WithMany(x => x.OrderProducts)
             .HasForeignKey(x => x.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
        
         builder.HasOne(x => x.Product)

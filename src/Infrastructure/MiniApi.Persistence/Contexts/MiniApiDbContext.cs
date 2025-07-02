@@ -7,8 +7,22 @@ public class MiniApiDbContext:DbContext
 {
     public MiniApiDbContext(DbContextOptions<MiniApiDbContext> options):base(options)
     { 
+
+    }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Bütün konfigurasiya class-larını avtomatik tətbiq etmək üçün:
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MiniApiDbContext).Assembly);
+        base.OnModelCreating(modelBuilder);
     }
 
-
     public DbSet<Image> Images { get; set; }
+    public DbSet<Product> Products { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderProduct> OrderProducts { get; set; }
+    public DbSet<Review> Reviews { get; set; }
+    public DbSet<Favourite> Favourites { get; set; }
+
+    
 }

@@ -23,7 +23,7 @@ public class ImageConfiguration : IEntityTypeConfiguration<Image>
         builder.HasOne(x => x.Product)
             .WithMany(x => x.Images) 
             .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Cascade); // Product silinərsə, şəkillər də silinir       
+            .OnDelete(DeleteBehavior.Restrict);      
     }
 }
 

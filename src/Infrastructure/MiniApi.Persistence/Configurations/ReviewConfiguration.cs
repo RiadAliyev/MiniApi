@@ -19,7 +19,7 @@ public class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.HasOne(x => x.Product)
             .WithMany(x => x.Reviews) 
             .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
        
         builder.Property(x => x.Content)
             .HasMaxLength(1000); 

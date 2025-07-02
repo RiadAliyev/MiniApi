@@ -21,7 +21,7 @@ public class FavouriteConfiguration : IEntityTypeConfiguration<Favourite>
         builder.HasOne(x => x.Product)
             .WithMany() // əgər Product-da ICollection<Favourite> yoxdursa, WithMany() boş qalır
             .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Cascade); // Product silinərsə, Favourite-lər də silinsin
+            .OnDelete(DeleteBehavior.Restrict); // Product silinərsə, Favourite-lər də silinsin
         
     }
 }
