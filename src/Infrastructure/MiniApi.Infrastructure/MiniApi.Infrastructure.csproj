@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\..\Core\MiniApi.Application\MiniApi.Application.csproj" />
   </ItemGroup>
 
 </Project>

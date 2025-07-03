@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Core\MiniApi.Application\MiniApi.Application.csproj" />
     <ProjectReference Include="..\..\Core\MiniApi.Domain\MiniApi.Domain.csproj" />
+    <ProjectReference Include="..\MiniApi.Infrastructure\MiniApi.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

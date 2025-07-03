@@ -4,6 +4,8 @@ using MiniApi.Persistence;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using MiniApi.Application.Validations.ImageValidations;
+using MiniApi.Application.Abstracts.Repositories;
+using MiniApi.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,7 @@ builder.Services.AddDbContext<MiniApiDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
 
-
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.RegisterService();
 
 var app = builder.Build();
