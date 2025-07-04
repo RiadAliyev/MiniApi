@@ -1,17 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using MiniApi.Domain.Entities;
 
 namespace MiniApi.Persistence.Contexts;
 
-public class MiniApiDbContext:DbContext
+public class MiniApiDbContext:IdentityDbContext<AppUser>
 {
-    public MiniApiDbContext(DbContextOptions<MiniApiDbContext> options):base(options)
-    { 
-
+    public MiniApiDbContext(DbContextOptions<MiniApiDbContext> options) : base(options)
+    {
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Bütün konfigurasiya class-larını avtomatik tətbiq etmək üçün:
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MiniApiDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }

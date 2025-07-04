@@ -6,6 +6,9 @@ using FluentValidation.AspNetCore;
 using MiniApi.Application.Validations.ImageValidations;
 using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Persistence.Repositories;
+using MiniApi.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Writers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,16 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MiniApiDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+});
+
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true;
+
+    //options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 3;
+
 });
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
