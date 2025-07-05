@@ -28,11 +28,11 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
     options.User.RequireUniqueEmail = true;
-
     //options.Lockout.AllowedForNewUsers = true;
     options.Lockout.MaxFailedAccessAttempts = 3;
 
-});
+}).AddEntityFrameworkStores<MiniApiDbContext>()
+  .AddDefaultTokenProviders();
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.RegisterService();
