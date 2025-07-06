@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.DTOs.Users;
 using MiniApi.Application.Shared;
 

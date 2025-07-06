@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.DTOs.Users;
 using MiniApi.Application.Shared;
+using MiniApi.Application.Shared.Settings;
 using MiniApi.Domain.Entities;
 
 namespace MiniApi.Persistence.Services;
@@ -44,7 +46,7 @@ public class UserService : IUserService
         AppUser newUser = new()
         {
             Email = dto.Email,
-            Fullname = dto.Fullname,
+            FullName = dto.FullName,
             UserName = dto.Email,
         };
 
@@ -61,7 +63,7 @@ public class UserService : IUserService
         }
         string confirmEmailLink = await GetEmailConfirmLink(newUser);
         await _mailService.SendEmailAsync(new List<string> { newUser.Email }, "Email Confitmation",
-            confirmEmailLink);
+        confirmEmailLink);
 
         return new("Successfully created", true, HttpStatusCode.Created);
     }
