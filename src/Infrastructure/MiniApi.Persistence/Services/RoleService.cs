@@ -82,4 +82,21 @@ public class RoleService:IRoleService
 
         return new BaseResponse<string?>("Role updated successfully", true, HttpStatusCode.OK);
     }
+
+    public async Task<BaseResponse<string?>> DeleteRole(string roleName)
+    {
+        var role = await _rolemanager.FindByNameAsync(roleName);
+        if (role is null)
+            return new BaseResponse<string?>("Role not found", HttpStatusCode.NotFound);
+
+        var result = await _rolemanager.DeleteAsync(role);
+        if (!result.Succeeded)
+            return new BaseResponse<string?>(string.Join(", ", result.Errors.Select(e => e.Description)), HttpStatusCode.BadRequest);
+
+        return new BaseResponse<string?>("Role deleted successfully", true, HttpStatusCode.OK);
+    }
+    public List<string> GetAllRoles()
+    {
+        return _rolemanager.Roles.Select(r => r.Name).ToList();
+    }
 }

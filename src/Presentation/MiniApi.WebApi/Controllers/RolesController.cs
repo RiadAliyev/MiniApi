@@ -25,7 +25,7 @@ public class RolesController : ControllerBase
         var permissions = PermissionHelper.GetAllPermissions();
         return Ok(permissions);
     }
-    [HttpPost]
+    [HttpPost("Create Role")]
     public async Task<IActionResult> Create(RoleCreateDto dto)
     {
         var result = await _roleService.CreateRole(dto);
@@ -40,6 +40,20 @@ public class RolesController : ControllerBase
 
         var result = await _roleService.UpdateRole(dto);
         return StatusCode((int)result.StatusCode, result);
+    }
+
+    [HttpDelete("{roleName}")]
+    public async Task<IActionResult> Delete(string roleName)
+    {
+        var result = await _roleService.DeleteRole(roleName);
+        return StatusCode((int)result.StatusCode, result);
+    }
+
+    [HttpGet]
+    public IActionResult GetAllRoles()
+    {
+        var roles = _roleService.GetAllRoles();
+        return Ok(roles);
     }
 }
 

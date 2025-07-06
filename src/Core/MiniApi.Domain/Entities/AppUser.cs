@@ -6,6 +6,7 @@ public class AppUser:IdentityUser
 {
     public string FullName { get; set; } = null!;
 
-    public string RefreshToken { get; set; } = null!;
+    public string? RefreshToken { get; set; }
     public DateTime ExpireDate { get; set; }
+    public ICollection<Favourite>? Favourites { get; set; }
 }

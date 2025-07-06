@@ -23,5 +23,8 @@ public class OrderProductConfiguration : IEntityTypeConfiguration<OrderProduct>
             .WithMany() 
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(x => x.TotalPrice)
+            .HasColumnType("decimal(18,2)");
     }
 }

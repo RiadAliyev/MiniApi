@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.PasswordDtos;
@@ -8,21 +10,18 @@ using MiniApi.Application.Shared;
 
 namespace MiniApi.WebApi.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/auth")]
 [ApiController]
 public class AccountsController : ControllerBase
 {
-    private IUserService _userService { get; }
-    public AccountsController(IUserService userservice)
+    private readonly IUserService _userService;
+
+    public AccountsController(IUserService userService)
     {
-        _userService = userservice;
+        _userService = userService;
     }
 
-    // POST api/<AccountsController>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
     public async Task<IActionResult> Register([FromBody] UserRegisterDto dto)
     {
         var result = await _userService.Register(dto);
@@ -30,12 +29,21 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
     {
         var result = await _userService.Login(dto);
+        return StatusCode((int)result.StatusCode, result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+            return Unauthorized(new BaseResponse<string>("Unauthorized", HttpStatusCode.Unauthorized));
+
+        var result = await _userService.GetUserProfileAsync(userId);
         return StatusCode((int)result.StatusCode, result);
     }
 
@@ -50,7 +58,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-
+    [Authorize]
     [HttpPost("assign-roles")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
@@ -89,3 +97,4 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 }
+

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiniApi.Persistence.Contexts;
 
@@ -11,9 +12,11 @@ using MiniApi.Persistence.Contexts;
 namespace MiniApi.Persistence.Migrations
 {
     [DbContext(typeof(MiniApiDbContext))]
-    partial class MiniApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706183416_changeappuser")]
+    partial class changeappuser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,15 +278,9 @@ namespace MiniApi.Persistence.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Favourites", (string)null);
                 });
@@ -385,9 +382,6 @@ namespace MiniApi.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(max)");
@@ -508,15 +502,7 @@ namespace MiniApi.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MiniApi.Domain.Entities.AppUser", "User")
-                        .WithMany("Favourites")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Product");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MiniApi.Domain.Entities.Image", b =>
@@ -580,11 +566,6 @@ namespace MiniApi.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("MiniApi.Domain.Entities.AppUser", b =>
-                {
-                    b.Navigation("Favourites");
                 });
 
             modelBuilder.Entity("MiniApi.Domain.Entities.Category", b =>

@@ -305,5 +305,22 @@ public class UserService : IUserService
             ExpireDate = tokenDescriptor.Expires!.Value,
         };
     }
+    public async Task<BaseResponse<UserProfileDto>> GetUserProfileAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return new BaseResponse<UserProfileDto>("User not found", HttpStatusCode.NotFound);
+
+        var userProfile = new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            // Lazım olsa əlavə sahələr əlavə et
+        };
+
+        return new BaseResponse<UserProfileDto>("Success", userProfile, HttpStatusCode.OK);
+    }
+
 
 }
