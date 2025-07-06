@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using MiniApi.Persistence.Contexts;
 using MiniApi.Persistence;
 using FluentValidation;
@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Diagnostics;
+using MiniApi.Application.Shared.Helpers;
+using MiniApi.WebApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 
 
-builder.Services.AddEndpointsApiExplorer(); // Swagger üçün vacibdir
+builder.Services.AddEndpointsApiExplorer(); // Swagger Ã¼Ã§Ã¼n vacibdir
 builder.Services.AddSwaggerGen(options => {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
@@ -32,7 +34,7 @@ builder.Services.AddSwaggerGen(options => {
         Version = "v1"
     });
 
-    // JWT üçün t?hlük?sizlik sxemini ?lav? et
+    // JWT Ã¼Ã§Ã¼n tÉ™hlÃ¼kÉ™sizlik sxemini É™lavÉ™ et
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -43,7 +45,7 @@ builder.Services.AddSwaggerGen(options => {
         Description = "JWT token daxil edin. Format: Bearer {token}"
     });
 
-    // T?hlük?sizlik t?l?bi ?lav? olunur
+    // TÉ™hlÃ¼kÉ™sizlik tÉ™lÉ™bi É™lavÉ™ olunur
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -78,7 +80,21 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
   .AddDefaultTokenProviders();
 
 builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWTSettings"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JWTSettings>();
+
+
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionHelper.GetAllPermissionList())
+    {
+        options.AddPolicy(permission, policy =>
+        {
+            policy.RequireClaim("Permission", permission);
+        });
+    }
+});
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -87,7 +103,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Dev üçün. Prod-da `true` olmalýdýr.
+    options.RequireHttpsMetadata = false; // Dev Ã¼Ã§Ã¼n. Prod-da `true` olmalÄ±dÄ±r.
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -110,6 +126,7 @@ builder.Services.RegisterService();
 var app = builder.Build();
 
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -117,12 +134,12 @@ app.UseSwaggerUI(options =>
 
 });
 
-// Configure the HTTP request pipeline.
+//Configure the HTTP request pipeline.
 
 
 app.UseHttpsRedirection();
 
-app.UseMiddleware<ExceptionHandlerMiddleware>();
+
 app.UseAuthentication();
 
 app.UseAuthorization();

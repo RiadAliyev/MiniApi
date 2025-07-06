@@ -21,10 +21,11 @@ public static class ServiceRegistration
         
 
 
-
-
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IFileUpload, FileUpload>();
-
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IEmailService, EmailService>();
+       
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.DTOs.PasswordDtos;
 using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.DTOs.Users;
 using MiniApi.Application.Shared;
@@ -18,7 +19,7 @@ public class AccountsController : ControllerBase
     }
 
     // POST api/<AccountsController>
-    [HttpPost]
+    [HttpPost("register")]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
@@ -28,7 +29,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost]
+    [HttpPost("login")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
@@ -38,7 +39,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost]
+    [HttpPost("refresh-token")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]

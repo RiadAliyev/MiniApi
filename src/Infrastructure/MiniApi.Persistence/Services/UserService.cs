@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.DTOs.PasswordDtos;
 using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.DTOs.Users;
 using MiniApi.Application.Shared;
@@ -123,7 +124,6 @@ public class UserService : IUserService
                 }
                 roleNames.Add(role.Name!);
             }
-
 
         }
         return new BaseResponse<string>($"Succesfuly added roles:{string.Join(", ", roleNames)}", HttpStatusCode.OK);
