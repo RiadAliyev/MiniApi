@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiniApi.Persistence.Contexts;
 
@@ -11,9 +12,11 @@ using MiniApi.Persistence.Contexts;
 namespace MiniApi.Persistence.Migrations
 {
     [DbContext(typeof(MiniApiDbContext))]
-    partial class MiniApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250707170449_changeentities")]
+    partial class changeentities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

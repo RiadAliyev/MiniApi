@@ -47,6 +47,15 @@ public class AuthenticationController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
+
+    [Authorize]
+    [HttpGet("MyFullProfile")]
+    public async Task<IActionResult> GetFullProfileByToken([FromQuery] string token)
+    {
+        var result = await _userService.GetFullProfileAsync(token);
+        return StatusCode((int)result.StatusCode, result);
+    }
+
     [Authorize]
     [HttpPost("Refresh-token")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]

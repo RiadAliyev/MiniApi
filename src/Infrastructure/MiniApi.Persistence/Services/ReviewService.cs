@@ -37,6 +37,7 @@ public class ReviewService : IReviewService
             ProductId = dto.ProductId,
             Content = dto.Content,
             Rating = dto.Rating,
+            UserId = userId
             // Əgər Reviewda UserId varsa əlavə et: UserId = userId
         };
 

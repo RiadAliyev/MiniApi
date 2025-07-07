@@ -17,6 +17,7 @@ public interface IUserService
     Task<BaseResponse<UserProfileDto>> GetUserProfileAsync(string userId);
     Task<BaseResponse<List<UserProfileDto>>> GetAllUsersAsync();
     Task<BaseResponse<UserProfileDto>> GetUserByIdAsync(string userId);
+    Task<BaseResponse<UserFullProfileDto>> GetFullProfileAsync(string userId);
 }
 
 

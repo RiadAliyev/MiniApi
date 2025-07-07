@@ -9,4 +9,5 @@ public class OrderProductDetailDto
     public decimal TotalPrice { get; set; }
     public string SellerId { get; set; }
     public string SellerName { get; set; }
+    public string ProductName { get; set; }
 }

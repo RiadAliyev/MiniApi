@@ -18,9 +18,8 @@ public class ReviewsController : ControllerBase
 
     private readonly IReviewService _reviewService;
     private readonly IUserContextService _userContextService;
-    public ReviewsController(IReviewService reviewService, UserContextService userContextService)
+    public ReviewsController(IReviewService reviewService, IUserContextService userContextService)
     {
-        
         _reviewService = reviewService;
         _userContextService = userContextService;
     }

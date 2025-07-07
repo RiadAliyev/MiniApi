@@ -1,19 +1,27 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.DTOs.FavouriteDtos;
+using MiniApi.Application.DTOs.OrderDtos;
 using MiniApi.Application.DTOs.PasswordDtos;
+using MiniApi.Application.DTOs.ProductDtos;
+using MiniApi.Application.DTOs.ReviewDtos;
 using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.DTOs.Users;
 using MiniApi.Application.Shared;
 using MiniApi.Application.Shared.Settings;
 using MiniApi.Domain.Entities;
+using MiniApi.Persistence.Repositories;
 
 namespace MiniApi.Persistence.Services;
 
@@ -25,17 +33,30 @@ public class UserService : IUserService
     private readonly RoleManager<IdentityRole> _roleManager;
     private SignInManager<AppUser> _singInManager { get; }
     private JWTSettings _jwtSetting { get; }
+    private readonly IOrderRepository _orderRepository;
+    private readonly IFavouriteRepository _favouriteRepository;
+    private readonly IReviewRepository _reviewRepository;
+    private readonly IProductRepository _productRepository;
+
     public UserService(UserManager<AppUser> userManager,
         SignInManager<AppUser> singInManager,
         IOptions<JWTSettings> jWTSettings,
         RoleManager<IdentityRole> roleManager,
-        IEmailService mailService)
+        IEmailService mailService,
+        IOrderRepository orderRepository,
+        IFavouriteRepository favouriteRepository,
+        IReviewRepository reviewRepository,
+        IProductRepository productRepository)
     {
         _userManager = userManager;
         _singInManager = singInManager;
         _jwtSetting = jWTSettings.Value;
         _roleManager = roleManager;
         _mailService = mailService;
+        _orderRepository = orderRepository;
+        _favouriteRepository = favouriteRepository;
+        _reviewRepository = reviewRepository;
+        _productRepository = productRepository;
     }
     public async Task<BaseResponse<string>> Register(UserRegisterDto dto)
     {
@@ -353,6 +374,90 @@ public class UserService : IUserService
         };
 
         return new BaseResponse<UserProfileDto>("Success", userProfile, HttpStatusCode.OK);
+    }
+
+    public async Task<BaseResponse<UserFullProfileDto>> GetFullProfileAsync(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        if (!handler.CanReadToken(token))
+            return new("Invalid token", HttpStatusCode.BadRequest);
+
+        var jwtToken = handler.ReadJwtToken(token);
+        var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "nameid")?.Value;
+        if (userId is null)
+            return new("User not found", HttpStatusCode.NotFound);
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            return new("User not found", HttpStatusCode.NotFound);
+
+        var roles = (await _userManager.GetRolesAsync(user)).ToList();
+
+        // Məhsullar (əgər sellerdirsə)
+        List<ProductGetDto> products = new();
+        if (roles.Contains("Seller"))
+        {
+            products = await _productRepository.GetByFiltered(x => x.OwnerId == userId)
+                .Select(x => new ProductGetDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Title = x.Title,
+                    Price = x.Price,
+                    // digər mappinglər
+                }).ToListAsync();
+        }
+
+        // Favoritlər
+        var favourites = await _favouriteRepository.GetByFiltered(x => x.UserId == userId, new[] { (Expression<Func<Favourite, object>>)(x => x.Product) })
+            .Select(x => new FavouriteGetDto
+            {
+                Id = x.Id,
+                ProductId = x.ProductId,
+                ProductName = x.Product.Name
+            }).ToListAsync();
+
+        // Orderlər (buyer olan user üçün)
+        var orders = await _orderRepository.GetByFiltered(x => x.BuyerId == userId, new[] { (Expression<Func<Order, object>>)(x => x.OrderProducts) })
+            .Select(x => new OrderGetDto
+            {
+                Id = x.Id,
+                OrderDate = x.OrderDate,
+                Status = x.Status,
+                Products = x.OrderProducts.Select(op => new OrderProductDetailDto
+                {
+                    ProductId = op.ProductId,
+                    ProductName = op.Product != null ? op.Product.Name : "",
+                    ProductCount = op.ProductCount,
+                    Price = op.Product != null ? op.Product.Price : 0,
+                    TotalPrice = op.TotalPrice
+                }).ToList()
+            }).ToListAsync();
+
+        // Review-lar (əgər əlavə etmək istəyirsənsə)
+        var reviews = await _reviewRepository.GetByFiltered(x => x.UserId == userId, new[] { (Expression<Func<Review, object>>)(x => x.Product) })
+            .Select(x => new ReviewGetDto
+            {
+                Id = x.Id,
+                ProductId = x.ProductId,
+                ProductName = x.Product.Name,
+                Content = x.Content,
+                Rating = x.Rating
+            }).ToListAsync();
+
+        var response = new UserFullProfileDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Roles = roles,
+            Products = products,
+            Orders = orders,
+            Favourites = favourites,
+            Reviews = reviews
+        };
+
+        return new BaseResponse<UserFullProfileDto>("Success", response, HttpStatusCode.OK);
     }
 
 }
