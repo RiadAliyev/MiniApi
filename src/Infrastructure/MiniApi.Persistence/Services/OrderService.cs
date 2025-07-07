@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.OrderDtos;
+using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.Shared;
 using MiniApi.Domain.Entities;
 using System.Net;
@@ -12,15 +14,34 @@ public class OrderService : IOrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;
+    private UserManager<AppUser> _userManager { get; }
 
     public OrderService(
         IOrderRepository orderRepository,
-        IProductRepository productRepository)
+        IProductRepository productRepository,
+        UserManager<AppUser> userManager)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
+        _userManager = userManager;
     }
 
+    public async Task<BaseResponse<UserProfileDto>> GetUserProfileAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return new BaseResponse<UserProfileDto>("User not found", HttpStatusCode.NotFound);
+
+        var userProfile = new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            // Lazım olsa əlavə sahələr əlavə et
+        };
+
+        return new BaseResponse<UserProfileDto>("Success", userProfile, HttpStatusCode.OK);
+    }
     public async Task<BaseResponse<OrderGetDto>> CreateAsync(OrderCreateDto dto, string buyerId)
     {
         var order = new Order

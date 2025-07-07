@@ -21,14 +21,14 @@ public class AccountsController : ControllerBase
         _userService = userService;
     }
 
-    [HttpPost("register")]
+    [HttpPost("Register")]
     public async Task<IActionResult> Register([FromBody] UserRegisterDto dto)
     {
         var result = await _userService.Register(dto);
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("login")]
+    [HttpPost("Login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
     {
         var result = await _userService.Login(dto);
@@ -36,7 +36,7 @@ public class AccountsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("me")]
+    [HttpGet("GetAll-User")]
     public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -47,7 +47,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("refresh-token")]
+    [HttpPost("Refresh-token")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
@@ -59,7 +59,7 @@ public class AccountsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("assign-roles")]
+    [HttpPost("Assign-roles")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
@@ -69,7 +69,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpGet]
+    [HttpGet("Confirm-Email")]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]

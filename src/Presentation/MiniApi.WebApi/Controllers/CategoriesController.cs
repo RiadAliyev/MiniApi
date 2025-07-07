@@ -18,22 +18,22 @@ public class CategoriesController : ControllerBase
         _categoryService = categoryService;
     }
 
-    [HttpGet]
+    [HttpGet("Get-All")]
     public async Task<IActionResult> GetAll()
     {
         var response = await _categoryService.GetAllAsync();
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("GetById")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var response = await _categoryService.GetByIdAsync(id);
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpPost]
+    [Authorize]
+    [HttpPost("Create")]
     public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
     {
         var response = await _categoryService.CreateAsync(dto);

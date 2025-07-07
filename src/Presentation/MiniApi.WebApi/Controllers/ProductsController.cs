@@ -32,7 +32,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet]
+    [HttpGet("GetAll")]
     public async Task<IActionResult> GetAll([FromQuery] Guid? categoryId, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice, [FromQuery] string? search)
     {
         var response = await _productService.GetAllAsync(categoryId, minPrice, maxPrice, search);
@@ -40,7 +40,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("{id}")]
+    [HttpGet("GetById")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var response = await _productService.GetByIdAsync(id);
@@ -48,7 +48,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost]
+    [HttpPost("Create")]
     public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
     {
         var userId = _userContextService.GetCurrentUserId(User); // Helperdən alınır
@@ -57,7 +57,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{id}")]
+    [HttpPut("{id}/Update")]
     public async Task<IActionResult> Update(Guid id, [FromBody] ProductUpdateDto dto)
     {
         if (id != dto.Id)
@@ -69,7 +69,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("{id}")]
+    [HttpDelete("{id}/Delete")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -79,7 +79,7 @@ public class ProductsController : ControllerBase
 
 
     [Authorize]
-    [HttpGet("my")]
+    [HttpGet("GetMyProducts")]
     public async Task<IActionResult> GetMyProducts()
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -88,7 +88,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("{productId}/images")]
+    [HttpPost("{productId}/Add-Images")]
     public async Task<IActionResult> AddImage(Guid productId, [FromBody] ImageCreateDto dto)
     {
         // ProductId-ni DTO-ya təyin et (optional: dto-dan da ala bilərsən, amma URL daha düzgündür)
@@ -109,7 +109,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("{productId}/images/{imageId}")]
+    [HttpDelete("{productId}/images/{imageId}/Delete-Image")]
     public async Task<IActionResult> DeleteImage(Guid productId, Guid imageId)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -132,7 +132,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("{productId}/favourite")]
+    [HttpPost("{productId}/Add-favourite")]
     public async Task<IActionResult> AddFavourite(Guid productId)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -141,7 +141,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("{productId}/favourite")]
+    [HttpDelete("{productId}/Delete-favourite")]
     public async Task<IActionResult> RemoveFavourite(Guid productId)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -150,7 +150,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("favourites/my")]
+    [HttpGet("GetMyFavourites")]
     public async Task<IActionResult> GetMyFavourites()
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -158,7 +158,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
     [Authorize]
-    [HttpPost("upload")]
+    [HttpPost("File-Upload")]
     public async Task<IActionResult> Upload([FromForm] FileUploadDto dto)
     {
         var fileUrl = await _fileUpload.UploadAsync(dto.File);

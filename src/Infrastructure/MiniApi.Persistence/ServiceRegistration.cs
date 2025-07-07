@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Application.Abstracts.Services;
+using MiniApi.Application.Shared.Helpers;
 using MiniApi.Infrastructure.Services;
 using MiniApi.Persistence.Repositories;
 using MiniApi.Persistence.Repositoriesl;
@@ -30,8 +31,7 @@ public static class ServiceRegistration
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IFavouriteService, FavouriteService>();
+        services.AddScoped<IUserContextService, UserContextService>();
 
-
-       
     }
 }

@@ -22,8 +22,8 @@ public class OrdersController : ControllerBase
         _userContextService = userContextService;
     }
 
-    [Authorize(Roles = "Buyer")]
-    [HttpPost]
+    [Authorize]
+    [HttpPost("Create")]
     public async Task<IActionResult> Create([FromBody] OrderCreateDto dto)
     {
         var buyerId = _userContextService.GetCurrentUserId(User);
@@ -32,7 +32,7 @@ public class OrdersController : ControllerBase
     }
 
     [Authorize(Roles = "Buyer")]
-    [HttpGet("my")]
+    [HttpGet("GetMyOrders")]
     public async Task<IActionResult> GetMyOrders()
     {
         var buyerId = _userContextService.GetCurrentUserId(User);
@@ -50,12 +50,14 @@ public class OrdersController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [HttpGet("profile")]
+    public IActionResult Profile()
     {
         var userId = _userContextService.GetCurrentUserId(User);
-        var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "";
-        var response = await _orderService.GetByIdAsync(id, userId, role);
-        return StatusCode((int)response.StatusCode, response);
+        var email = _userContextService.GetCurrentUserEmail(User);
+        var roles = _userContextService.GetCurrentUserRoles(User);
+
+        // istifadə et...
+        return Ok(new { userId, email, roles });
     }
 }
