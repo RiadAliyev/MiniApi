@@ -143,4 +143,26 @@ public class ProductService : IProductService
             OwnerId = product.OwnerId
         };
     }
+    public async Task<BaseResponse<List<ProductGetDto>>> SearchByTitleAsync(string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+            return new BaseResponse<List<ProductGetDto>>("Search text is required", null, HttpStatusCode.BadRequest);
+
+        var loweredSearch = search.Trim().ToLower();
+
+        var products = await _productRepository
+            .GetAll(true)
+            .Where(x => x.Title.ToLower().Contains(loweredSearch))
+            .Include(x => x.Category)
+            .Include(x => x.Images)
+            .ToListAsync();
+
+        var dtos = products.Select(MapProductToGetDto).ToList();
+
+        if (dtos.Count == 0)
+            return new BaseResponse<List<ProductGetDto>>("No products found", dtos, HttpStatusCode.NotFound);
+
+        return new BaseResponse<List<ProductGetDto>>("Success", dtos, HttpStatusCode.OK);
+    }
+
 }

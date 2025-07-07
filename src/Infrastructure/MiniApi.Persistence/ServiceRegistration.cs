@@ -32,6 +32,8 @@ public static class ServiceRegistration
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IFavouriteService, FavouriteService>();
         services.AddScoped<IUserContextService, UserContextService>();
+        services.AddScoped<IReviewService, ReviewService>();
+
 
     }
 }

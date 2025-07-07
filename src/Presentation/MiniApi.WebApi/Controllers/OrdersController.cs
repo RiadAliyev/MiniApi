@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.OrderDtos;
 using MiniApi.Application.Shared.Helpers;
+using MiniApi.Application.Shared;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -22,7 +23,7 @@ public class OrdersController : ControllerBase
         _userContextService = userContextService;
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Order.Create)]
     [HttpPost("Create")]
     public async Task<IActionResult> Create([FromBody] OrderCreateDto dto)
     {
@@ -31,7 +32,7 @@ public class OrdersController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize(Roles = "Buyer")]
+    [Authorize(Policy = Permissions.Order.GetMy)]
     [HttpGet("GetMyOrders")]
     public async Task<IActionResult> GetMyOrders()
     {
@@ -40,7 +41,7 @@ public class OrdersController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize(Roles = "Seller")]
+    [Authorize(Policy = Permissions.Order.GetMySales)]
     [HttpGet("my-sales")]
     public async Task<IActionResult> GetMySales()
     {
@@ -59,5 +60,25 @@ public class OrdersController : ControllerBase
 
         // istifadə et...
         return Ok(new { userId, email, roles });
+    }
+
+
+    [Authorize(Policy = Permissions.Order.Delete)] 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userId = _userContextService.GetCurrentUserId(User);
+        var response = await _orderService.DeleteAsync(id, userId);
+        return StatusCode((int)response.StatusCode, response);
+    }
+
+    // PUT /api/orders/{id}
+    [Authorize(Policy = Permissions.Order.Update)]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] OrderUpdateDto dto)
+    {
+        var userId = _userContextService.GetCurrentUserId(User);
+        var response = await _orderService.UpdateAsync(id, dto, userId);
+        return StatusCode((int)response.StatusCode, response);
     }
 }

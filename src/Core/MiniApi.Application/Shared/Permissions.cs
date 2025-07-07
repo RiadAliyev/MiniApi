@@ -22,15 +22,13 @@ public static class Permissions
 
     public static class Category
     {
-        public const string MainCreate = "Category.MainCreate";
-        public const string SubCreate = "Category.SubCreate";
         public const string Update = "Category.Update";
         public const string Delete = "Category.Delete";
+        public const string Create = "Category.Create";
 
         public static List<string> All = new()
         {
-            MainCreate,
-            SubCreate,
+            Create,
             Update,
             Delete
         };

@@ -4,6 +4,8 @@ using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.FileUpload;
 using MiniApi.Application.DTOs.ImageDtos;
 using MiniApi.Application.DTOs.ProductDtos;
+using MiniApi.Application.DTOs.ReviewDtos;
+using MiniApi.Application.Shared;
 using MiniApi.Application.Shared.Helpers;
 using MiniApi.Infrastructure.Services;
 using MiniApi.Persistence.Services;
@@ -21,17 +23,27 @@ public class ProductsController : ControllerBase
     private readonly IImageService _imageService;
     private readonly IFavouriteService _favouriteService;
     private readonly IFileUpload _fileUpload;
+    private readonly IReviewService _reviewService;
 
-    public ProductsController(IProductService productService, IUserContextService userContextService, IImageService imageService, IFavouriteService favouriteService, IFileUpload fileUpload)
+    public ProductsController(IProductService productService, IUserContextService userContextService, IImageService imageService, IFavouriteService favouriteService, IFileUpload fileUpload, IReviewService reviewService)
     {
         _productService = productService;
         _userContextService = userContextService;
         _imageService = imageService;
         _favouriteService = favouriteService;
         _fileUpload = fileUpload;
+        _reviewService = reviewService;
     }
 
     [Authorize]
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string search)
+    {
+        var response = await _productService.SearchByTitleAsync(search);
+        return StatusCode((int)response.StatusCode, response);
+    }
+
+    
     [HttpGet("GetAll")]
     public async Task<IActionResult> GetAll([FromQuery] Guid? categoryId, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice, [FromQuery] string? search)
     {
@@ -39,7 +51,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    
     [HttpGet("GetById")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -47,7 +59,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.Create)]
     [HttpPost("Create")]
     public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
     {
@@ -56,7 +68,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.Update)]
     [HttpPut("{id}/Update")]
     public async Task<IActionResult> Update(Guid id, [FromBody] ProductUpdateDto dto)
     {
@@ -68,7 +80,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.Delete)]
     [HttpDelete("{id}/Delete")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -78,7 +90,7 @@ public class ProductsController : ControllerBase
     }
 
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.GetMy)]
     [HttpGet("GetMyProducts")]
     public async Task<IActionResult> GetMyProducts()
     {
@@ -87,7 +99,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.AddProductImage)]
     [HttpPost("{productId}/Add-Images")]
     public async Task<IActionResult> AddImage(Guid productId, [FromBody] ImageCreateDto dto)
     {
@@ -101,14 +113,13 @@ public class ProductsController : ControllerBase
         if (product == null || product.Data == null)
             return NotFound("Product tapılmadı.");
 
-        if (product.Data.UserId != userId)
-            return Forbid("Yalnız öz məhsulunuza şəkil əlavə edə bilərsiniz.");
+        
 
         var response = await _imageService.AddAsync(dto);
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.DeleteProductImage)]
     [HttpDelete("{productId}/images/{imageId}/Delete-Image")]
     public async Task<IActionResult> DeleteImage(Guid productId, Guid imageId)
     {
@@ -131,7 +142,7 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Product.AddProductFavourite)]
     [HttpPost("{productId}/Add-favourite")]
     public async Task<IActionResult> AddFavourite(Guid productId)
     {
@@ -157,11 +168,31 @@ public class ProductsController : ControllerBase
         var response = await _favouriteService.GetUserFavouritesAsync(userId);
         return StatusCode((int)response.StatusCode, response);
     }
-    [Authorize]
+
+    [Authorize(Policy = Permissions.Product.Create)]
     [HttpPost("File-Upload")]
     public async Task<IActionResult> Upload([FromForm] FileUploadDto dto)
     {
         var fileUrl = await _fileUpload.UploadAsync(dto.File);
         return Ok(new { FileUrl = fileUrl });
+    }
+
+    [Authorize(Policy = Permissions.Review.Create)]
+    [HttpPost("{productId}/AddReview")]
+    public async Task<IActionResult> AddReview(Guid productId, [FromBody] ReviewCreateDto dto)
+    {
+        dto.ProductId = productId;
+        var userId = _userContextService.GetCurrentUserId(User);
+        var response = await _reviewService.CreateAsync(dto, userId);
+        return StatusCode((int)response.StatusCode, response);
+    }
+
+    [Authorize(Policy = Permissions.Review.Delete)]
+    [HttpDelete("reviews/{reviewId}/DeleteReview")]
+    public async Task<IActionResult> DeleteReview(Guid reviewId)
+    {
+        var userId = _userContextService.GetCurrentUserId(User);
+        var response = await _reviewService.DeleteAsync(reviewId, userId);
+        return StatusCode((int)response.StatusCode, response);
     }
 }

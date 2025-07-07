@@ -36,7 +36,7 @@ public class AccountsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("GetAll-User")]
+    [HttpGet("Get-User")]
     public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -47,6 +47,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
+    [Authorize]
     [HttpPost("Refresh-token")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
@@ -58,7 +59,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [Authorize]
+    [Authorize(Policy = Permissions.Account.AddRole)]
     [HttpPost("Assign-roles")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
@@ -69,6 +70,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
+    [Authorize]
     [HttpGet("Confirm-Email")]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
@@ -79,6 +81,7 @@ public class AccountsController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
+    [Authorize]
     [HttpPost("ForgotPassword")]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ForgotPassword([FromQuery] string email)
@@ -88,7 +91,7 @@ public class AccountsController : ControllerBase
     }
 
 
-
+    [Authorize]
     [HttpPost("ResetPassword")]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)

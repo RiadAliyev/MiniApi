@@ -11,4 +11,5 @@ public interface IProductService
     Task<BaseResponse<ProductGetDto>> CreateAsync(ProductCreateDto dto, string ownerId);
     Task<BaseResponse<ProductGetDto>> UpdateAsync(ProductUpdateDto dto, string userId);
     Task<BaseResponse<bool>> DeleteAsync(Guid id, string userId);
+    Task<BaseResponse<List<ProductGetDto>>> SearchByTitleAsync(string search);
 }

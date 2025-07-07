@@ -14,7 +14,7 @@ public class ImageConfiguration : IEntityTypeConfiguration<Image>
         builder.HasKey(x => x.Id);
         
         builder.Property(x => x.ImageUrl)
-            .HasMaxLength(255)
+            .HasMaxLength(500)
             .IsRequired();
         
         builder.Property(x => x.ProductId)

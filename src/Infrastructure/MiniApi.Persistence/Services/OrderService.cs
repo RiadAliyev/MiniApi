@@ -6,6 +6,7 @@ using MiniApi.Application.DTOs.OrderDtos;
 using MiniApi.Application.DTOs.UserDtos;
 using MiniApi.Application.Shared;
 using MiniApi.Domain.Entities;
+using MiniApi.Infrastructure.Services;
 using System.Net;
 
 namespace MiniApi.Persistence.Services;
@@ -14,16 +15,19 @@ public class OrderService : IOrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IProductRepository _productRepository;
+    private readonly IEmailService _emailService;
     private UserManager<AppUser> _userManager { get; }
 
     public OrderService(
         IOrderRepository orderRepository,
         IProductRepository productRepository,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        IEmailService emailService)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
         _userManager = userManager;
+        _emailService = emailService;
     }
 
     public async Task<BaseResponse<UserProfileDto>> GetUserProfileAsync(string userId)
@@ -64,12 +68,55 @@ public class OrderService : IOrderService
                 ProductId = item.ProductId,
                 ProductCount = item.ProductCount,
                 TotalPrice = totalPrice,
-                SellerId = product.OwnerId  // OwnerId mütləq olmalıdır Product-da!
+                SellerId = product.OwnerId
             });
         }
 
         await _orderRepository.AddAsync(order);
         await _orderRepository.SaveChangeAsync();
+
+        // --- BUYER-ə EMAIL GÖNDƏR ---
+        var buyer = await _userManager.FindByIdAsync(buyerId);
+        if (buyer != null && !string.IsNullOrWhiteSpace(buyer.Email))
+        {
+            var subject = "Sifarişiniz uğurla yaradıldı!";
+            var body = $@"
+            Hörmətli {buyer.FullName},<br>
+            Sifarişiniz qəbul olundu.<br>
+            Sifariş ID: {order.Id}<br>
+            Tarix: {order.OrderDate}<br>
+            Məhsullar: <br>
+            <ul>
+                {string.Join("", order.OrderProducts.Select(op => $"<li>{op.ProductCount} x {op.ProductId} (Cəmi: {op.TotalPrice} AZN)</li>"))}
+            </ul>
+        ";
+            await _emailService.SendEmailAsync(new[] { buyer.Email }, subject, body);
+        }
+
+        // --- HƏR BİR SELLER-ə EMAIL GÖNDƏR ---
+        var sellerIds = order.OrderProducts.Select(op => op.SellerId).Distinct().ToList();
+        foreach (var sellerId in sellerIds)
+        {
+            var seller = await _userManager.FindByIdAsync(sellerId);
+            if (seller != null && !string.IsNullOrWhiteSpace(seller.Email))
+            {
+                // Satıcının bu sifarişdə olan məhsullarını tap
+                var sellerProducts = order.OrderProducts.Where(op => op.SellerId == sellerId).ToList();
+
+                var subject = "Yeni sifarişiniz var!";
+                var body = $@"
+                Hörmətli {seller.FullName},<br>
+                Sizə yeni sifariş gəlib!<br>
+                Sifariş ID: {order.Id}<br>
+                Tarix: {order.OrderDate}<br>
+                Sifariş olunan məhsullar:<br>
+                <ul>
+                    {string.Join("", sellerProducts.Select(op => $"<li>{op.ProductCount} x {op.ProductId} (Cəmi: {op.TotalPrice} AZN)</li>"))}
+                </ul>
+            ";
+                await _emailService.SendEmailAsync(new[] { seller.Email }, subject, body);
+            }
+        }
 
         var orderDto = MapOrderToGetDto(order);
         return new BaseResponse<OrderGetDto>("Order created", orderDto, HttpStatusCode.Created);
@@ -81,7 +128,7 @@ public class OrderService : IOrderService
             .GetAll(true)
             .Where(x => x.BuyerId == buyerId)
             .Include(x => x.OrderProducts)
-                .ThenInclude(op => op.Product)
+            .ThenInclude(op => op.Product)
             .ToListAsync();
 
         var dtos = orders.Select(MapOrderToGetDto).ToList();
@@ -94,7 +141,7 @@ public class OrderService : IOrderService
             .GetAll(true)
             .Where(x => x.OrderProducts.Any(op => op.SellerId == sellerId))
             .Include(x => x.OrderProducts)
-                .ThenInclude(op => op.Product)
+            .ThenInclude(op => op.Product)
             .ToListAsync();
 
         var dtos = orders.Select(order =>
@@ -112,7 +159,7 @@ public class OrderService : IOrderService
         var order = await _orderRepository
             .GetAll(true)
             .Include(x => x.OrderProducts)
-                .ThenInclude(op => op.Product)
+            .ThenInclude(op => op.Product)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (order == null)
@@ -134,21 +181,58 @@ public class OrderService : IOrderService
 
     private OrderGetDto MapOrderToGetDto(Order order)
     {
+        var products = order.OrderProducts?.Select(op => new OrderProductDetailDto
+        {
+            ProductId = op.ProductId,
+            ProductTitle = op.Product?.Title ?? "",
+            Price = op.Product?.Price ?? 0,
+            ProductCount = op.ProductCount,
+            TotalPrice = op.TotalPrice,
+            SellerId = op.SellerId,
+            SellerName = "" // Seller adı varsa, ayrıca yüklə (və ya null)
+        }).ToList() ?? new List<OrderProductDetailDto>();
+
         return new OrderGetDto
         {
             Id = order.Id,
             OrderDate = order.OrderDate,
             Status = order.Status,
-            Products = order.OrderProducts?.Select(op => new OrderProductDetailDto
-            {
-                ProductId = op.ProductId,
-                ProductTitle = op.Product?.Title ?? "",
-                Price = op.Product?.Price ?? 0,
-                ProductCount = op.ProductCount,
-                TotalPrice = op.TotalPrice,
-                SellerId = op.SellerId,
-                SellerName = "" // Seller adı varsa, ayrıca yüklə (və ya null)
-            }).ToList() ?? new List<OrderProductDetailDto>()
+            Products = products,
+            TotalPrice = products.Sum(p => p.TotalPrice) // << Bunu əlavə et!
         };
+    }
+    public async Task<BaseResponse<bool>> DeleteAsync(Guid id, string userId)
+    {
+        var order = await _orderRepository.GetByIdAsync(id);
+        if (order == null)
+            return new BaseResponse<bool>("Order not found", false, HttpStatusCode.NotFound);
+
+        
+
+        _orderRepository.Delete(order);
+        await _orderRepository.SaveChangeAsync();
+        return new BaseResponse<bool>("Order deleted", true, HttpStatusCode.OK);
+    }
+
+    public async Task<BaseResponse<OrderGetDto>> UpdateAsync(Guid id, OrderUpdateDto dto, string userId)
+    {
+        var order = await _orderRepository
+            .GetAll(true)
+            .Include(x => x.OrderProducts)
+            .ThenInclude(op => op.Product)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (order == null)
+            return new BaseResponse<OrderGetDto>("Order not found", HttpStatusCode.NotFound);
+
+        
+        order.Status = dto.Status;
+        // Əlavə field-lar olarsa, burda yenilə
+
+        _orderRepository.Update(order);
+        await _orderRepository.SaveChangeAsync();
+
+        var resultDto = MapOrderToGetDto(order);
+        return new BaseResponse<OrderGetDto>("Order updated", resultDto, HttpStatusCode.OK);
     }
 }

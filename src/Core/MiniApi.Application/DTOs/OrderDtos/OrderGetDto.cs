@@ -6,4 +6,5 @@ public class OrderGetDto
     public DateTime OrderDate { get; set; }
     public string Status { get; set; }
     public List<OrderProductDetailDto> Products { get; set; }
+    public decimal TotalPrice { get; set; }
 }
