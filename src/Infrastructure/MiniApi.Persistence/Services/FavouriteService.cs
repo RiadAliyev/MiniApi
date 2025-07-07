@@ -37,6 +37,7 @@ public class FavouriteService : IFavouriteService
             Id = Guid.NewGuid(),
             ProductId = productId,
             UserId = userId
+            
         };
 
         await _favouriteRepository.AddAsync(fav);
@@ -64,7 +65,7 @@ public class FavouriteService : IFavouriteService
             {
                 Id = x.Id,
                 ProductId = x.ProductId,
-                ProductName = x.Product.Name
+                
             }).ToListAsync();
 
         return new BaseResponse<List<FavouriteGetDto>>("Uğurlu", list, HttpStatusCode.OK);

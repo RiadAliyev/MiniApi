@@ -21,18 +21,16 @@ public class ProductsController : ControllerBase
     private readonly IProductService _productService;
     private readonly IUserContextService _userContextService;
     private readonly IImageService _imageService;
-    private readonly IFavouriteService _favouriteService;
-    private readonly IFileUpload _fileUpload;
-    private readonly IReviewService _reviewService;
 
-    public ProductsController(IProductService productService, IUserContextService userContextService, IImageService imageService, IFavouriteService favouriteService, IFileUpload fileUpload, IReviewService reviewService)
+    private readonly IFileUpload _fileUpload;
+    
+
+    public ProductsController(IProductService productService, IUserContextService userContextService, IImageService imageService, IFileUpload fileUpload)
     {
         _productService = productService;
         _userContextService = userContextService;
         _imageService = imageService;
-        _favouriteService = favouriteService;
         _fileUpload = fileUpload;
-        _reviewService = reviewService;
     }
 
     [Authorize]
@@ -142,32 +140,6 @@ public class ProductsController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    [Authorize(Policy = Permissions.Product.AddProductFavourite)]
-    [HttpPost("{productId}/Add-favourite")]
-    public async Task<IActionResult> AddFavourite(Guid productId)
-    {
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _favouriteService.AddAsync(productId, userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
-
-    [Authorize]
-    [HttpDelete("{productId}/Delete-favourite")]
-    public async Task<IActionResult> RemoveFavourite(Guid productId)
-    {
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _favouriteService.RemoveAsync(productId, userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
-
-    [Authorize]
-    [HttpGet("GetMyFavourites")]
-    public async Task<IActionResult> GetMyFavourites()
-    {
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _favouriteService.GetUserFavouritesAsync(userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
 
     [Authorize(Policy = Permissions.Product.Create)]
     [HttpPost("File-Upload")]
@@ -177,22 +149,5 @@ public class ProductsController : ControllerBase
         return Ok(new { FileUrl = fileUrl });
     }
 
-    [Authorize(Policy = Permissions.Review.Create)]
-    [HttpPost("{productId}/AddReview")]
-    public async Task<IActionResult> AddReview(Guid productId, [FromBody] ReviewCreateDto dto)
-    {
-        dto.ProductId = productId;
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _reviewService.CreateAsync(dto, userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
-
-    [Authorize(Policy = Permissions.Review.Delete)]
-    [HttpDelete("reviews/{reviewId}/DeleteReview")]
-    public async Task<IActionResult> DeleteReview(Guid reviewId)
-    {
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _reviewService.DeleteAsync(reviewId, userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
+    
 }

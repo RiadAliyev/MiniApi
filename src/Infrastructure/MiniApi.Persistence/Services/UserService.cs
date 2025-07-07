@@ -62,6 +62,8 @@ public class UserService : IUserService
             }
             return new(errorMassege.ToString(), HttpStatusCode.BadRequest);
         }
+        var roleName = dto.Role.ToString();
+        await _userManager.AddToRoleAsync(newUser, roleName);
         string confirmEmailLink = await GetEmailConfirmLink(newUser);
         await _mailService.SendEmailAsync(new List<string> { newUser.Email }, "Email Confitmation",
         confirmEmailLink);
@@ -321,6 +323,36 @@ public class UserService : IUserService
 
         return new BaseResponse<UserProfileDto>("Success", userProfile, HttpStatusCode.OK);
     }
+    public async Task<BaseResponse<List<UserProfileDto>>> GetAllUsersAsync()
+    {
+        var users = _userManager.Users.ToList();
 
+        var userDtos = users.Select(user => new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName
+            // Burada lazım olsa əlavə sahələr əlavə edə bilərsən
+        }).ToList();
+
+        return new BaseResponse<List<UserProfileDto>>("Success", userDtos, HttpStatusCode.OK);
+    }
+
+    public async Task<BaseResponse<UserProfileDto>> GetUserByIdAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return new BaseResponse<UserProfileDto>("User not found", HttpStatusCode.NotFound);
+
+        var userProfile = new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName
+            // Əlavə sahələr əlavə etmək olar
+        };
+
+        return new BaseResponse<UserProfileDto>("Success", userProfile, HttpStatusCode.OK);
+    }
 
 }

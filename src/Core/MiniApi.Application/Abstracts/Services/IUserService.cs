@@ -14,8 +14,9 @@ public interface IUserService
     Task<BaseResponse<string>> ConfirmEmail(string userId, string token);
     Task<BaseResponse<string>> ForgotPassword(string email);
     Task<BaseResponse<string>> ResetPassword(ResetPasswordDto dto);
-
     Task<BaseResponse<UserProfileDto>> GetUserProfileAsync(string userId);
+    Task<BaseResponse<List<UserProfileDto>>> GetAllUsersAsync();
+    Task<BaseResponse<UserProfileDto>> GetUserByIdAsync(string userId);
 }
 
 
