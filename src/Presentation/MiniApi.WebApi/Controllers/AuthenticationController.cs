@@ -94,7 +94,7 @@ public class AuthenticationController : ControllerBase
     }
 
 
-    [Authorize]
+    
     [HttpPost("ForgotPassword")]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ForgotPassword([FromQuery] string email)
@@ -104,7 +104,7 @@ public class AuthenticationController : ControllerBase
     }
 
 
-    [Authorize]
+    
     [HttpPost("ResetPassword")]
     [ProducesResponseType(typeof(BaseResponse<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)

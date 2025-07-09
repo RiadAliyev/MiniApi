@@ -85,6 +85,7 @@ public class UserService : IUserService
         }
         var roleName = dto.Role.ToString();
         await _userManager.AddToRoleAsync(newUser, roleName);
+        await _userManager.UpdateSecurityStampAsync(newUser);
         string confirmEmailLink = await GetEmailConfirmLink(newUser);
         await _mailService.SendEmailAsync(new List<string> { newUser.Email }, "Email Confitmation",
         confirmEmailLink);
@@ -211,7 +212,7 @@ public class UserService : IUserService
         {
             return new("User not found or email not confirmed", HttpStatusCode.BadRequest);
         }
-
+        await _userManager.UpdateSecurityStampAsync(user);
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var resetLink = $"https://localhost:7071/api/Accounts/ResetPassword?userId={user.Id}&token={HttpUtility.UrlEncode(token)}";
 
