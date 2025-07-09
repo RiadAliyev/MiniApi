@@ -1,15 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Net;
 using Microsoft.EntityFrameworkCore;
 using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.ProductDtos;
 using MiniApi.Application.Shared;
-using MiniApi.Application.Shared.Helpers;
 using MiniApi.Domain.Entities;
-using MiniApi.Domain.Enums;
-using MiniApi.Infrastructure.Services;
-using MiniApi.Persistence.Repositories;
-using System.Net;
 
 namespace MiniApi.Persistence.Services;
 
@@ -127,7 +122,7 @@ public class ProductService : IProductService
             return new BaseResponse<ProductGetDto>("Product not found", HttpStatusCode.NotFound);
 
         // Əgər admin və ya owner-dirsə, icazə ver
-        if (product.OwnerId != userId && !(userRoles.Contains("Admin")))
+        if (product.OwnerId != userId && !(userRoles.Contains("Admin"))&& !(userRoles.Contains("Moderator")))
             return new BaseResponse<ProductGetDto>("Unauthorized: You are not owner", HttpStatusCode.Forbidden);
 
         product.Title = dto.Title;
@@ -149,7 +144,7 @@ public class ProductService : IProductService
         if (product == null)
             return new BaseResponse<bool>("Product not found", false, HttpStatusCode.NotFound);
 
-        if (product.OwnerId != userId && !(userRoles.Contains("Admin")))
+        if (product.OwnerId != userId && !(userRoles.Contains("Admin")) && !(userRoles.Contains("Moderator")))
             return new BaseResponse<bool>("Unauthorized: You are not owner", false, HttpStatusCode.Forbidden);
 
         product.IsDeleted = true; // <--- Soft delete
