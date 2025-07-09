@@ -95,8 +95,16 @@ public class RoleService:IRoleService
 
         return new BaseResponse<string?>("Role deleted successfully", true, HttpStatusCode.OK);
     }
-    public List<string> GetAllRoles()
+
+    public BaseResponse<List<RoleListDto>> GetAllRoles()
     {
-        return _rolemanager.Roles.Select(r => r.Name).ToList();
+        var roles = _rolemanager.Roles
+            .Select(r => new RoleListDto
+            {
+                Id = r.Id,
+                Name = r.Name
+            }).ToList();
+
+        return new BaseResponse<List<RoleListDto>>("Success", roles, HttpStatusCode.OK);
     }
 }
