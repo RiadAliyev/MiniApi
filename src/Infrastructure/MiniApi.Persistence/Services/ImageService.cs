@@ -1,128 +1,77 @@
 ﻿using System.Net;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using MiniApi.Application.Abstracts.Repositories;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.ImageDtos;
 using MiniApi.Application.Shared;
 using MiniApi.Domain.Entities;
+using MiniApi.Infrastructure.Services;
+using MiniApi.Persistence.Repositories;
 
 namespace MiniApi.Persistence.Services;
 
 public class ImageService : IImageService
 {
     private readonly IRepository<Image> _imageRepository;
+    private readonly IProductRepository _productRepository;
+    private readonly IFileUpload _fileUpload;
 
-    public ImageService(IRepository<Image> imageRepository)
+    public ImageService(IRepository<Image> imageRepository, IProductRepository productRepository, IFileUpload fileUpload)
     {
         _imageRepository = imageRepository;
+        _productRepository = productRepository;
+        _fileUpload = fileUpload;
     }
 
-    public async Task<BaseResponse<List<ImageGetDto>>> GetAllAsync()
+    
+
+    // ADD IMAGE
+    public async Task<BaseResponse<string>> AddImageAsync(Guid productId, IFormFile file, string userId)
     {
-        try
-        {
-            var images = await _imageRepository.GetAll().ToListAsync();
-            var imageDtos = images.Select(x => new ImageGetDto
-            {
-                Id = x.Id,
-                ImageUrl = x.ImageUrl,
-                ProductId = x.ProductId,
-                CreatedAt = x.CreatedAt
-            }).ToList();
+        // Məhsulun varlığını və sahibini yoxla
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product == null)
+            return new BaseResponse<string>("Product not found", HttpStatusCode.NotFound);
 
-            return new BaseResponse<List<ImageGetDto>>(
-                "Bütün şəkillər uğurla qaytarıldı.",
-                imageDtos,
-                HttpStatusCode.OK
-            );
-        }
-        catch (Exception ex)
-        {
-            return new BaseResponse<List<ImageGetDto>>(ex.Message, false, HttpStatusCode.InternalServerError);
-        }
-    }
+        if (product.OwnerId != userId)
+            return new BaseResponse<string>("You can only add image to your own product", HttpStatusCode.Forbidden);
 
-    public async Task<BaseResponse<ImageGetDto>> GetByIdAsync(Guid id)
-    {
-        var image = await _imageRepository.GetByIdAsync(id);
-        if (image == null)
-            return new BaseResponse<ImageGetDto>("Şəkil tapılmadı.", HttpStatusCode.NotFound);
+        // File upload et
+        var imageUrl = await _fileUpload.UploadAsync(file);
 
-        var dto = new ImageGetDto
+        // Image entity-ni DB-yə əlavə et
+        var image = new Image
         {
-            Id = image.Id,
-            ImageUrl = image.ImageUrl,
-            ProductId = image.ProductId,
-            CreatedAt = image.CreatedAt
+            Id = Guid.NewGuid(),
+            ProductId = productId,
+            ImageUrl = imageUrl,
+            CreatedAt = DateTime.UtcNow
         };
 
-        return new BaseResponse<ImageGetDto>("Şəkil tapıldı.", dto, HttpStatusCode.OK);
-    }
-
-    public async Task<BaseResponse<ImageGetDto>> GetByNameAsync(string name)
-    {
-        var image = await _imageRepository.GetByFiltered(x => x.ImageUrl == name).FirstOrDefaultAsync();
-        if (image == null)
-            return new BaseResponse<ImageGetDto>("Şəkil tapılmadı.", HttpStatusCode.NotFound);
-
-        var dto = new ImageGetDto
-        {
-            Id = image.Id,
-            ImageUrl = image.ImageUrl,
-            ProductId = image.ProductId,
-            CreatedAt = image.CreatedAt
-        };
-
-        return new BaseResponse<ImageGetDto>("Şəkil tapıldı.", dto, HttpStatusCode.OK);
-    }
-
-    public async Task<BaseResponse<string>> AddAsync(ImageCreateDto dto)
-    {
-        try
-        {
-            var image = new Image
-            {
-                Id = Guid.NewGuid(),
-                ImageUrl = dto.ImageUrl,
-                ProductId = dto.ProductId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _imageRepository.AddAsync(image);
-            await _imageRepository.SaveChangeAsync();
-
-            return new BaseResponse<string>("Şəkil uğurla əlavə olundu.", null, HttpStatusCode.Created);
-        }
-        catch (Exception ex)
-        {
-            return new BaseResponse<string>(ex.Message, false, HttpStatusCode.InternalServerError);
-        }
-    }
-
-    public async Task<BaseResponse<ImageUpdateDto>> UpdateAsync(Guid id, ImageUpdateDto dto)
-    {
-        var image = await _imageRepository.GetByIdAsync(id);
-        if (image == null)
-            return new BaseResponse<ImageUpdateDto>("Şəkil tapılmadı.", HttpStatusCode.NotFound);
-
-        image.ImageUrl = dto.ImageUrl;
-        image.ProductId = dto.ProductId;
-
-        _imageRepository.Update(image);
+        await _imageRepository.AddAsync(image);
         await _imageRepository.SaveChangeAsync();
 
-        return new BaseResponse<ImageUpdateDto>("Şəkil uğurla yeniləndi.", dto, HttpStatusCode.OK);
+        return new BaseResponse<string>("Image added successfully", imageUrl, HttpStatusCode.Created);
     }
 
-    public async Task<BaseResponse<string>> DeleteAsync(Guid id)
+    // DELETE IMAGE
+    public async Task<BaseResponse<bool>> DeleteImageAsync(Guid productId, Guid imageId, string userId)
     {
-        var image = await _imageRepository.GetByIdAsync(id);
-        if (image == null)
-            return new BaseResponse<string>("Şəkil tapılmadı.", HttpStatusCode.NotFound);
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product == null)
+            return new BaseResponse<bool>("Product not found", false, HttpStatusCode.NotFound);
+
+        if (product.OwnerId != userId)
+            return new BaseResponse<bool>("You can only delete images from your own product", false, HttpStatusCode.Forbidden);
+
+        var image = await _imageRepository.GetByIdAsync(imageId);
+        if (image == null || image.ProductId != productId)
+            return new BaseResponse<bool>("Image not found or does not belong to this product", false, HttpStatusCode.NotFound);
 
         _imageRepository.Delete(image);
         await _imageRepository.SaveChangeAsync();
 
-        return new BaseResponse<string>("Şəkil uğurla silindi.", null, HttpStatusCode.OK);
+        return new BaseResponse<bool>("Image deleted successfully", true, HttpStatusCode.OK);
     }
 }

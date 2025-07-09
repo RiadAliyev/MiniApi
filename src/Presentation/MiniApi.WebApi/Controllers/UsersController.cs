@@ -29,6 +29,7 @@ public class UsersController : ControllerBase
     /// </summary>
     [Authorize(Roles = "Admin")]
     [HttpGet]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> GetAllUsers()
     {
         // Bütün istifadəçiləri gətir
@@ -49,6 +50,8 @@ public class UsersController : ControllerBase
     /// İstənilən istifadəçi üçün profil
     /// </summary>
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> GetUserById(string id)
     {
         var response = await _userService.GetUserProfileAsync(id);

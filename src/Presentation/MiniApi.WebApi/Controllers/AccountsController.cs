@@ -25,17 +25,16 @@ public class AccountsController : ControllerBase
     [HttpPost("Assign-roles")]
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> AddRole([FromBody] UserAddRoleDto dto)
     {
         var result = await _userService.AddRole(dto);
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [Authorize(Policy = Permissions.User.GetAll)]
-    [HttpGet("GetAll")]
+    [Authorize(Policy = Permissions.Account.AddRole)]
+    [HttpGet("GetAllUser")]
     [ProducesResponseType(typeof(BaseResponse<List<UserProfileDto>>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
     public async Task<IActionResult> GetAllUsers()
     {
         var response = await _userService.GetAllUsersAsync();

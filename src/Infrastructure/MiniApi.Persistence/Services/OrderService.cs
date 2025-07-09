@@ -224,25 +224,4 @@ public class OrderService : IOrderService
         return new BaseResponse<bool>("Order deleted (soft)", true, HttpStatusCode.OK);
     }
 
-    public async Task<BaseResponse<OrderGetDto>> UpdateAsync(Guid id, OrderUpdateDto dto, string userId)
-    {
-        var order = await _orderRepository
-            .GetAll(true)
-            .Include(x => x.OrderProducts)
-            .ThenInclude(op => op.Product)
-            .FirstOrDefaultAsync(x => x.Id == id);
-
-        if (order == null)
-            return new BaseResponse<OrderGetDto>("Order not found", HttpStatusCode.NotFound);
-
-        
-        order.Status = dto.Status;
-        // Əlavə field-lar olarsa, burda yenilə
-
-        _orderRepository.Update(order);
-        await _orderRepository.SaveChangeAsync();
-
-        var resultDto = MapOrderToGetDto(order);
-        return new BaseResponse<OrderGetDto>("Order updated", resultDto, HttpStatusCode.OK);
-    }
 }

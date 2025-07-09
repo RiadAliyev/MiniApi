@@ -22,6 +22,10 @@ public class AuthenticationController : ControllerBase
     }
 
     [HttpPost("Register")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
     public async Task<IActionResult> Register([FromBody] UserRegisterDto dto)
     {
         var result = await _userService.Register(dto);
@@ -29,6 +33,9 @@ public class AuthenticationController : ControllerBase
     }
 
     [HttpPost("Login")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
     {
         var result = await _userService.Login(dto);
@@ -37,6 +44,8 @@ public class AuthenticationController : ControllerBase
 
     [Authorize]
     [HttpGet("User-About")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -50,6 +59,9 @@ public class AuthenticationController : ControllerBase
 
     [Authorize]
     [HttpGet("MyFullProfile")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> GetFullProfileByToken([FromQuery] string token)
     {
         var result = await _userService.GetFullProfileAsync(token);
@@ -61,7 +73,6 @@ public class AuthenticationController : ControllerBase
     [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
-    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.InternalServerError)]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest dto)
     {
         var result = await _userService.RefreshTokenAsync(dto);

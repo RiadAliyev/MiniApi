@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.RoleDtos;
@@ -31,6 +32,9 @@ public class RolesController : ControllerBase
 
     [Authorize(Policy = Permissions.Role.Create)]
     [HttpPost("Create Role")]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.PartialContent)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
     public async Task<IActionResult> Create(RoleCreateDto dto)
     {
         var result = await _roleService.CreateRole(dto);
@@ -39,6 +43,9 @@ public class RolesController : ControllerBase
 
     [Authorize(Policy = Permissions.Role.Update)]
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> Update(string id, [FromBody] RoleUpdateDto dto)
     {
         if (id != dto.Id)
@@ -50,6 +57,8 @@ public class RolesController : ControllerBase
 
     [Authorize(Policy = Permissions.Role.Delete)]
     [HttpDelete("{roleName}")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> Delete(string roleName)
     {
         var result = await _roleService.DeleteRole(roleName);
@@ -58,6 +67,7 @@ public class RolesController : ControllerBase
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     public IActionResult GetAllRoles()
     {
         var roles = _roleService.GetAllRoles();

@@ -19,6 +19,8 @@ using MiniApi.WebApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.WebHost.UseWebRoot("wwwroot");
 // Add services to the container.
 builder.Services.AddValidatorsFromAssembly(typeof(ImageCreateDtoValidator).Assembly);
 builder.Services.AddControllers();
@@ -139,6 +141,7 @@ app.UseSwaggerUI(options =>
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
 
 app.UseAuthentication();
 

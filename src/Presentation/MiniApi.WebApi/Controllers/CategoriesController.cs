@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.CategoryDtos;
@@ -14,7 +15,7 @@ public class CategoriesController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
 
-    [Authorize]
+    
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string search)
     {
@@ -28,6 +29,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("Get-All")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> GetAll()
     {
         var response = await _categoryService.GetAllAsync();
@@ -35,6 +37,8 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("GetById")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var response = await _categoryService.GetByIdAsync(id);
@@ -43,6 +47,9 @@ public class CategoriesController : ControllerBase
 
     [Authorize  (Policy =Permissions.Category.Create)]
     [HttpPost("Create")]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
     public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
     {
         var response = await _categoryService.CreateAsync(dto);
@@ -52,6 +59,8 @@ public class CategoriesController : ControllerBase
     // DELETE api/categories/{id}
     [Authorize(Policy = Permissions.Category.Create)]
     [HttpDelete("Delete")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var response = await _categoryService.DeleteAsync(id);
@@ -61,6 +70,8 @@ public class CategoriesController : ControllerBase
     // PUT api/categories/{id}
     [Authorize(Policy = Permissions.Category.Create)]
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] CategoryUpdateDto dto)
     {
         var response = await _categoryService.UpdateAsync(id, dto);

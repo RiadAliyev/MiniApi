@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.ReviewDtos;
@@ -26,6 +27,8 @@ public class ReviewsController : ControllerBase
 
     [Authorize(Policy = Permissions.Review.Create)]
     [HttpPost("{productId}/AddReview")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> AddReview(Guid productId, [FromBody] ReviewCreateDto dto)
     {
         dto.ProductId = productId;
@@ -36,6 +39,8 @@ public class ReviewsController : ControllerBase
 
     [Authorize(Policy = Permissions.Review.Delete)]
     [HttpDelete("reviews/{reviewId}/DeleteReview")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> DeleteReview(Guid reviewId)
     {
         var userId = _userContextService.GetCurrentUserId(User);

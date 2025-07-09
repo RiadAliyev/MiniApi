@@ -1,7 +1,9 @@
-﻿namespace MiniApi.Application.DTOs.ImageDtos;
+﻿using Microsoft.AspNetCore.Http;
+
+namespace MiniApi.Application.DTOs.ImageDtos;
 
 public class ImageCreateDto
 {
-    public string? ImageUrl { get; set; } 
     public Guid ProductId { get; set; }
+    public IFormFile File { get; set; }
 }

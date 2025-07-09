@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MiniApi.Application.Abstracts.Services;
@@ -22,6 +23,10 @@ public class FavouritesController : ControllerBase
 
     [Authorize(Policy = Permissions.Product.AddProductFavourite)]
     [HttpPost("{productId}/Add-favourite")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.Created)]
     public async Task<IActionResult> AddFavourite(Guid productId)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -31,6 +36,8 @@ public class FavouritesController : ControllerBase
 
     [Authorize]
     [HttpDelete("{productId}/Delete-favourite")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseResponse<string>), (int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> RemoveFavourite(Guid productId)
     {
         var userId = _userContextService.GetCurrentUserId(User);
@@ -40,6 +47,7 @@ public class FavouritesController : ControllerBase
 
     [Authorize]
     [HttpGet("GetMyFavourites")]
+    [ProducesResponseType(typeof(BaseResponse<TokenResponse>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> GetMyFavourites()
     {
         var userId = _userContextService.GetCurrentUserId(User);

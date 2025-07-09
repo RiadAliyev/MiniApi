@@ -21,4 +21,8 @@
     <ProjectReference Include="..\..\Infrastructure\MiniApi.Persistence\MiniApi.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

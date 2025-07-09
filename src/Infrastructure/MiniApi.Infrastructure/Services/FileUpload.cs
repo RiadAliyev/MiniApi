@@ -17,6 +17,8 @@ public class FileUpload : IFileUpload
 
     public async Task<string> UploadAsync(IFormFile file)
     {
+        if (string.IsNullOrEmpty(_env.WebRootPath))
+            throw new InvalidOperationException("WebRootPath is null. Ensure that wwwroot folder exists and application is configured properly.");
         var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
         if (!Directory.Exists(uploadsFolder))
         {

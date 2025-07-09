@@ -22,6 +22,5 @@ public class MiniApiDbContext:IdentityDbContext<AppUser>
     public DbSet<OrderProduct> OrderProducts { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Favourite> Favourites { get; set; }
-
-    
+ 
 }

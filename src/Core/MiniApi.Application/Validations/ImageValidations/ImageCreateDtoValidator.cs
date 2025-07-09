@@ -7,9 +7,7 @@ public class ImageCreateDtoValidator : AbstractValidator<ImageCreateDto>
 {
     public ImageCreateDtoValidator()
     {
-        RuleFor(x => x.ImageUrl)
-            .NotEmpty().WithMessage("ImageUrl cannot be empty!")
-            .MaximumLength(255).WithMessage("ImageUrl is too long! Maximum 255 characters allowed.");
+        
 
         RuleFor(x => x.ProductId)
             .NotEmpty().WithMessage("ProductId cannot be empty!");
