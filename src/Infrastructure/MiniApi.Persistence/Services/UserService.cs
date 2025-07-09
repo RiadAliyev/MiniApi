@@ -101,7 +101,7 @@ public class UserService : IUserService
             return new("Email or password os wrong.", HttpStatusCode.NotFound);
         }
 
-        if (existedUser.EmailConfirmed)
+        if (!existedUser.EmailConfirmed)
         {
             return new("Please Confirm your email", HttpStatusCode.BadRequest);
         }
@@ -160,8 +160,7 @@ public class UserService : IUserService
         if (user == null)
             return new BaseResponse<string>("User not found", null, HttpStatusCode.NotFound);
 
-        // Bura da decode yazsan, 100% əmin olarsan!
-        token = WebUtility.UrlDecode(token);
+       
 
         var result = await _userManager.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
