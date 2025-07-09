@@ -14,7 +14,7 @@ public class Product:BaseEntity
     public Guid CategoryId { get; set; }
     public Category? Category { get; set; }
 
-    
+    public bool IsDeleted { get; set; }
     public ICollection<Image>? Images { get; set; }
     public ICollection<Favourite>? Favourites { get; set; }
     public ICollection<Review>? Reviews { get; set; }

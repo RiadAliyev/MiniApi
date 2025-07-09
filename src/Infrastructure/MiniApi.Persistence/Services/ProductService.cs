@@ -22,7 +22,12 @@ public class ProductService : IProductService
 
     public async Task<BaseResponse<ProductGetDto>> GetByIdAsync(Guid id)
     {
-        var product = await _productRepository.GetByIdAsync(id);
+        var product = await _productRepository.GetAll(true)
+            .Where(x => x.Id == id && !x.IsDeleted)
+            .Include(x => x.Category)
+            .Include(x => x.Images)
+            .FirstOrDefaultAsync();
+
         if (product == null)
             return new BaseResponse<ProductGetDto>("Product not found", HttpStatusCode.NotFound);
 
@@ -32,7 +37,8 @@ public class ProductService : IProductService
 
     public async Task<BaseResponse<List<ProductGetDto>>> GetAllAsync(Guid? categoryId, decimal? minPrice, decimal? maxPrice, string? search)
     {
-        var query = _productRepository.GetAll(true);
+        var query = _productRepository.GetAll(true)
+            .Where(x => !x.IsDeleted);
 
         if (categoryId.HasValue)
             query = query.Where(x => x.CategoryId == categoryId.Value);
@@ -46,11 +52,9 @@ public class ProductService : IProductService
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(x => x.Title.Contains(search) || (x.Description != null && x.Description.Contains(search)));
 
-        // category və images join
         query = query.Include(x => x.Category).Include(x => x.Images);
 
         var products = await query.ToListAsync();
-
         var dtos = products.Select(MapProductToGetDto).ToList();
         return new BaseResponse<List<ProductGetDto>>("Success", dtos, HttpStatusCode.OK);
     }
@@ -59,7 +63,7 @@ public class ProductService : IProductService
     {
         var products = await _productRepository
             .GetAll(true)
-            .Where(x => x.OwnerId == userId)
+            .Where(x => x.OwnerId == userId && !x.IsDeleted)
             .Include(x => x.Category)
             .Include(x => x.Images)
             .ToListAsync();
@@ -75,7 +79,7 @@ public class ProductService : IProductService
             return new BaseResponse<ProductGetDto>("Category not found", HttpStatusCode.BadRequest);
 
         var product = new Product
-        {
+        {                      // <-- Burada set et
             Title = dto.Title,
             Description = dto.Description,
             Price = dto.Price,
@@ -122,10 +126,11 @@ public class ProductService : IProductService
         if (product.OwnerId != userId)
             return new BaseResponse<bool>("Unauthorized: You are not owner", false, HttpStatusCode.Forbidden);
 
-        _productRepository.Delete(product);
+        product.IsDeleted = true; // <--- Soft delete
+        _productRepository.Update(product); // <--- Update çağır
         await _productRepository.SaveChangeAsync();
 
-        return new BaseResponse<bool>("Product deleted", true, HttpStatusCode.OK);
+        return new BaseResponse<bool>("Product deleted (soft)", true, HttpStatusCode.OK);
     }
 
     // Manual mapping helper
@@ -152,7 +157,7 @@ public class ProductService : IProductService
 
         var products = await _productRepository
             .GetAll(true)
-            .Where(x => x.Title.ToLower().Contains(loweredSearch))
+            .Where(x => !x.IsDeleted && x.Title.ToLower().Contains(loweredSearch))
             .Include(x => x.Category)
             .Include(x => x.Images)
             .ToListAsync();

@@ -7,6 +7,7 @@ public class Favourite:BaseEntity
 
     public string UserId { get; set; }      // Əlavə et
     public AppUser? User { get; set; }
+    public bool IsDeleted { get; set; }
 
 }
 

@@ -7,7 +7,7 @@ public class Order:BaseEntity
 
     public string BuyerId { get; set; }  // Bunu əlavə et
     public AppUser Buyer { get; set; }   // Əgər əlaqə qurmaq istəyirsənsə
-
+    public bool IsDeleted { get; set; }
     public ICollection<OrderProduct>? OrderProducts { get; set; }
 }
 

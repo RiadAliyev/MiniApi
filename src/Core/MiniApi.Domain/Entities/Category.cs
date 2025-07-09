@@ -9,5 +9,6 @@ public class Category:BaseEntity
     public ICollection<Category>? SubCategories { get; set; }
 
     public ICollection<Product>? Products { get; set; }
+    public bool IsDeleted { get; set; }
 }
 

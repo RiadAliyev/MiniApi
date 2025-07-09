@@ -122,24 +122,32 @@ public class OrderService : IOrderService
         return new BaseResponse<OrderGetDto>("Order created", orderDto, HttpStatusCode.Created);
     }
 
-    public async Task<BaseResponse<List<OrderGetDto>>> GetMyOrdersAsync(string buyerId)
+    public async Task<BaseResponse<MyOrdersResponseDto>> GetMyOrdersAsync(string buyerId)
     {
         var orders = await _orderRepository
             .GetAll(true)
-            .Where(x => x.BuyerId == buyerId)
+            .Where(x => x.BuyerId == buyerId && !x.IsDeleted)
             .Include(x => x.OrderProducts)
             .ThenInclude(op => op.Product)
             .ToListAsync();
 
         var dtos = orders.Select(MapOrderToGetDto).ToList();
-        return new BaseResponse<List<OrderGetDto>>("Success", dtos, HttpStatusCode.OK);
+        var totalPrice = dtos.Sum(o => o.TotalPrice);
+
+        var result = new MyOrdersResponseDto
+        {
+            Orders = dtos,
+            TotalPrice = totalPrice
+        };
+
+        return new BaseResponse<MyOrdersResponseDto>("Success", result, HttpStatusCode.OK);
     }
 
     public async Task<BaseResponse<List<OrderGetDto>>> GetMySalesAsync(string sellerId)
     {
         var orders = await _orderRepository
             .GetAll(true)
-            .Where(x => x.OrderProducts.Any(op => op.SellerId == sellerId))
+            .Where(x => x.OrderProducts.Any(op => op.SellerId == sellerId) && !x.IsDeleted) // <--- filter əlavə olundu
             .Include(x => x.OrderProducts)
             .ThenInclude(op => op.Product)
             .ToListAsync();
@@ -160,12 +168,12 @@ public class OrderService : IOrderService
             .GetAll(true)
             .Include(x => x.OrderProducts)
             .ThenInclude(op => op.Product)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted); // <--- filter əlavə olundu
 
         if (order == null)
             return new BaseResponse<OrderGetDto>("Order not found", HttpStatusCode.NotFound);
 
-        // Buyer və Seller yoxlanışı
+        // Buyer və Seller yoxlanışı...
         var isOwner = order.BuyerId == userId;
         var isSeller = order.OrderProducts.Any(op => op.SellerId == userId);
 
@@ -209,9 +217,11 @@ public class OrderService : IOrderService
 
         
 
-        _orderRepository.Delete(order);
+        order.IsDeleted = true; // <--- soft delete
+        _orderRepository.Update(order);
         await _orderRepository.SaveChangeAsync();
-        return new BaseResponse<bool>("Order deleted", true, HttpStatusCode.OK);
+
+        return new BaseResponse<bool>("Order deleted (soft)", true, HttpStatusCode.OK);
     }
 
     public async Task<BaseResponse<OrderGetDto>> UpdateAsync(Guid id, OrderUpdateDto dto, string userId)

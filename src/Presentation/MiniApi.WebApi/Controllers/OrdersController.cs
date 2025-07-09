@@ -72,13 +72,13 @@ public class OrdersController : ControllerBase
         return StatusCode((int)response.StatusCode, response);
     }
 
-    // PUT /api/orders/{id}
-    [Authorize(Policy = Permissions.Order.Update)]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] OrderUpdateDto dto)
-    {
-        var userId = _userContextService.GetCurrentUserId(User);
-        var response = await _orderService.UpdateAsync(id, dto, userId);
-        return StatusCode((int)response.StatusCode, response);
-    }
+    //// PUT /api/orders/{id}
+    //[Authorize(Policy = Permissions.Order.Update)]
+    //[HttpPut("{id}")]
+    //public async Task<IActionResult> Update(Guid id, [FromBody] OrderUpdateDto dto)
+    //{
+    //    var userId = _userContextService.GetCurrentUserId(User);
+    //    var response = await _orderService.UpdateAsync(id, dto, userId);
+    //    return StatusCode((int)response.StatusCode, response);
+    //}
 }

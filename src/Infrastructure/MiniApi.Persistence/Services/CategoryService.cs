@@ -23,7 +23,11 @@ public class CategoryService : ICategoryService
 
     public async Task<BaseResponse<CategoryGetDto>> GetByIdAsync(Guid id)
     {
-        var category = await _categoryRepository.GetByFiltered(x => x.Id == id, new[] { (Expression<Func<Category, object>>)(c => c.SubCategories) }).FirstOrDefaultAsync();
+        var category = await _categoryRepository.GetByFiltered(
+            x => x.Id == id && !x.IsDeleted, // <--- filter əlavə olundu
+            new[] { (Expression<Func<Category, object>>)(c => c.SubCategories) }
+        ).FirstOrDefaultAsync();
+
         if (category == null)
             return new BaseResponse<CategoryGetDto>("Category not found", HttpStatusCode.NotFound);
 
@@ -36,7 +40,7 @@ public class CategoryService : ICategoryService
         // Root (main) category-ləri və nested sub-category-ləri gətir
         var categories = await _categoryRepository
             .GetAll(true)
-            .Where(x => x.ParentCategoryId == null)
+            .Where(x => x.ParentCategoryId == null && !x.IsDeleted) // <--- filter əlavə olundu
             .Include(x => x.SubCategories)
             .ToListAsync();
 
@@ -55,7 +59,7 @@ public class CategoryService : ICategoryService
         if (dto.ParentCategoryId != null)
         {
             var parentExists = await _categoryRepository.GetAll()
-                .AnyAsync(x => x.Id == dto.ParentCategoryId);
+        .AnyAsync(x => x.Id == dto.ParentCategoryId && !x.IsDeleted); // <--- filter əlavə olundu
             if (!parentExists)
                 return new BaseResponse<CategoryGetDto>("Parent category mövcud deyil!", HttpStatusCode.BadRequest);
         }
@@ -93,7 +97,7 @@ public class CategoryService : ICategoryService
 
         var categories = await _categoryRepository
             .GetAll(true)
-            .Where(x => x.Name.ToLower().Contains(loweredSearch))
+            .Where(x => !x.IsDeleted && x.Name.ToLower().Contains(loweredSearch))
             .Include(x => x.SubCategories)
             .ToListAsync();
 
@@ -111,21 +115,22 @@ public class CategoryService : ICategoryService
         if (category == null)
             return new BaseResponse<bool>("Category not found", false, HttpStatusCode.NotFound);
 
-        _categoryRepository.Delete(category);
+        category.IsDeleted = true; // <--- Soft delete
+        _categoryRepository.Update(category);
         await _categoryRepository.SaveChangeAsync();
 
-        return new BaseResponse<bool>("Category deleted", true, HttpStatusCode.OK);
+        return new BaseResponse<bool>("Category deleted (soft)", true, HttpStatusCode.OK);
     }
 
     public async Task<BaseResponse<CategoryGetDto>> UpdateAsync(Guid id, CategoryUpdateDto dto)
     {
-        var category = await _categoryRepository.GetByFiltered(x => x.Id == id).FirstOrDefaultAsync();
+        var category = await _categoryRepository.GetByFiltered(x => x.Id == id && !x.IsDeleted).FirstOrDefaultAsync();
         if (category == null)
             return new BaseResponse<CategoryGetDto>("Category not found", HttpStatusCode.NotFound);
 
-        // Adı dəyişdirmə zamanı eyni adda kateqoriya olmamalıdır
+        // Eyni adda category varsa error ver (yalnız aktiv olanlar)
         var exist = await _categoryRepository.GetAll()
-            .AnyAsync(x => x.Name == dto.Name && x.ParentCategoryId == dto.ParentCategoryId && x.Id != id);
+            .AnyAsync(x => x.Name == dto.Name && x.ParentCategoryId == dto.ParentCategoryId && x.Id != id && !x.IsDeleted);
         if (exist)
             return new BaseResponse<CategoryGetDto>("Category with same name already exists!", HttpStatusCode.BadRequest);
 

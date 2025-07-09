@@ -155,18 +155,22 @@ public class UserService : IUserService
 
     public async Task<BaseResponse<string>> ConfirmEmail(string userId, string token)
     {
-        var existedUser = await _userManager.FindByIdAsync(userId);
-        if (existedUser is null)
-        {
-            return new("Email confirmation failed", HttpStatusCode.NotFound);
-        }
-        var result = await _userManager.ConfirmEmailAsync(existedUser, token);
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return new BaseResponse<string>("User not found", null, HttpStatusCode.NotFound);
+
+        // Bura da decode yazsan, 100% əmin olarsan!
+        token = WebUtility.UrlDecode(token);
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
         {
-            return new("Email confirmation failed", HttpStatusCode.BadRequest);
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Description));
+            return new BaseResponse<string>($"Email confirmation failed: {errorMessages}", null, HttpStatusCode.BadRequest);
         }
-        return new("Email confirmed successfully", null, HttpStatusCode.OK);
-    }
+
+        return new BaseResponse<string>("Email confirmed successfully", null, HttpStatusCode.OK);
+    } 
 
     public async Task<BaseResponse<TokenResponse>> RefreshTokenAsync(RefreshTokenRequest request)
     {
@@ -221,7 +225,7 @@ public class UserService : IUserService
         var user = await _userManager.FindByIdAsync(dto.UserId);
         if (user == null)
             return new("User not found", HttpStatusCode.NotFound);
-
+        var decodedToken = Uri.UnescapeDataString(dto.Token);
         var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
 
         if (!result.Succeeded)
@@ -414,24 +418,23 @@ public class UserService : IUserService
             {
                 Id = x.Id,
                 ProductId = x.ProductId,
-                ProductName = x.Product.Name
+                ProductName = x.Product.Title
             }).ToListAsync();
 
-        // Orderlər (buyer olan user üçün)
         var orders = await _orderRepository.GetByFiltered(x => x.BuyerId == userId, new[] { (Expression<Func<Order, object>>)(x => x.OrderProducts) })
             .Select(x => new OrderGetDto
             {
-                Id = x.Id,
-                OrderDate = x.OrderDate,
-                Status = x.Status,
-                Products = x.OrderProducts.Select(op => new OrderProductDetailDto
-                {
+                 Id = x.Id,
+                 OrderDate = x.OrderDate,
+                 Status = x.Status,
+                 Products = x.OrderProducts.Select(op => new OrderProductDetailDto
+                 {
                     ProductId = op.ProductId,
-                    ProductName = op.Product != null ? op.Product.Name : "",
                     ProductCount = op.ProductCount,
                     Price = op.Product != null ? op.Product.Price : 0,
                     TotalPrice = op.TotalPrice
-                }).ToList()
+                 }).ToList(),
+                 TotalPrice = x.OrderProducts.Sum(op => op.TotalPrice) // <--- BURADA ƏLAVƏ ET!
             }).ToListAsync();
 
         // Review-lar (əgər əlavə etmək istəyirsənsə)
@@ -440,10 +443,11 @@ public class UserService : IUserService
             {
                 Id = x.Id,
                 ProductId = x.ProductId,
-                ProductName = x.Product.Name,
                 Content = x.Content,
                 Rating = x.Rating
             }).ToListAsync();
+
+        var ordersTotalPrice = orders.Sum(x => x.TotalPrice);
 
         var response = new UserFullProfileDto
         {
@@ -453,6 +457,7 @@ public class UserService : IUserService
             Roles = roles,
             Products = products,
             Orders = orders,
+            OrdersTotalPrice = ordersTotalPrice,
             Favourites = favourites,
             Reviews = reviews
         };
