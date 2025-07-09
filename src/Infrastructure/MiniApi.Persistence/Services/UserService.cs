@@ -352,13 +352,19 @@ public class UserService : IUserService
     {
         var users = _userManager.Users.ToList();
 
-        var userDtos = users.Select(user => new UserProfileDto
+        var userDtos = new List<UserProfileDto>();
+
+        foreach (var user in users)
         {
-            Id = user.Id,
-            Email = user.Email,
-            FullName = user.FullName
-            // Burada lazım olsa əlavə sahələr əlavə edə bilərsən
-        }).ToList();
+            var roles = await _userManager.GetRolesAsync(user); // Async olaraq rolları götür
+            userDtos.Add(new UserProfileDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = roles.FirstOrDefault() 
+            });
+        }
 
         return new BaseResponse<List<UserProfileDto>>("Success", userDtos, HttpStatusCode.OK);
     }
