@@ -5,6 +5,7 @@ using MiniApi.Application.Abstracts.Services;
 using MiniApi.Application.DTOs.ProductDtos;
 using MiniApi.Application.Shared;
 using MiniApi.Domain.Entities;
+using MiniApi.Infrastructure.Services;
 
 namespace MiniApi.Persistence.Services;
 
@@ -14,13 +15,15 @@ public class ProductService : IProductService
     private readonly ICategoryRepository _categoryRepository;
     private readonly IImageRepository _imageRepository;
     private readonly IFileUpload _fileUpload;
+    private readonly IRedisService _redisService;
 
-    public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository, IFileUpload fileUpload, IImageRepository imageRepository)
+    public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository, IFileUpload fileUpload, IImageRepository imageRepository,IRedisService redisService)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
         _fileUpload = fileUpload;
         _imageRepository = imageRepository;
+        _redisService = redisService;
     }
 
     public async Task<BaseResponse<ProductGetDto>> GetByIdAsync(Guid id)
@@ -175,6 +178,11 @@ public class ProductService : IProductService
             return new BaseResponse<List<ProductGetDto>>("Search text is required", null, HttpStatusCode.BadRequest);
 
         var loweredSearch = search.Trim().ToLower();
+        var cacheKey = $"search:products:{loweredSearch}";
+
+        var cached = await _redisService.GetAsync<List<ProductGetDto>>(cacheKey);
+        if (cached is not null && cached.Any())
+            return new BaseResponse<List<ProductGetDto>>("From Redis Cache", cached, HttpStatusCode.OK);
 
         var products = await _productRepository
             .GetAll(true)
@@ -188,8 +196,10 @@ public class ProductService : IProductService
         if (dtos.Count == 0)
             return new BaseResponse<List<ProductGetDto>>("No products found", dtos, HttpStatusCode.NotFound);
 
-        return new BaseResponse<List<ProductGetDto>>("Success", dtos, HttpStatusCode.OK);
+        // Cache-lə
+        await _redisService.SetAsync(cacheKey, dtos, TimeSpan.FromMinutes(30));
+
+        return new BaseResponse<List<ProductGetDto>>("From DB", dtos, HttpStatusCode.OK);
     }
-    
 
 }

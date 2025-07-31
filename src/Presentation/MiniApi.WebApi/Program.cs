@@ -16,6 +16,7 @@ using System.Text;
 using Microsoft.AspNetCore.Diagnostics;
 using MiniApi.Application.Shared.Helpers;
 using MiniApi.WebApi.Middlewares;
+using MiniApi.Application.Abstracts.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,21 +111,54 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Dev üçün. Prod-da `true` olmalıdır.
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
     };
+
+    // 🔥 BURADA BLACKLIST CHECK EDİLİR
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var redisService = context.HttpContext.RequestServices.GetRequiredService<IRedisService>();
+            var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+            var isBlacklisted = await redisService.GetAsync<bool>($"blacklist:{token}");
+            if (isBlacklisted)
+            {
+                context.Fail("Token is blacklisted");
+            }
+        }
+    };
 });
 
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
+    {
+        EndPoints = { "main-lark-29389.upstash.io:6379" },
+        Password = "AXLNAAIjcDE2MDdmNzk4YmFhMWE0ZjI0ODY5ODgyNzI1ZDNjOGMyYnAxMA",
+        Ssl = true,
+        AbortOnConnectFail = false // bele yazanda isleyir amma bunu appsetting.json da yazanda islemir
+    };
+    options.InstanceName = "ECommerceApp_";
+}); //redis 2 variant
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+//    options.InstanceName = "ECommerceApp_";
+//});  // Redis ucun
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.RegisterService();

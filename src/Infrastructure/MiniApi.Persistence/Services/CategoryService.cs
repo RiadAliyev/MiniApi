@@ -5,6 +5,7 @@ using MiniApi.Application.DTOs.CategoryDtos;
 using MiniApi.Application.DTOs.ProductDtos;
 using MiniApi.Application.Shared;
 using MiniApi.Domain.Entities;
+using MiniApi.Infrastructure.Services;
 using MiniApi.Persistence.Repositories;
 using MiniApi.Persistence.Repositoriesl;
 using System.Linq.Expressions;
@@ -15,10 +16,12 @@ namespace MiniApi.Persistence.Services;
 public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IRedisService _redisService;
 
-    public CategoryService(ICategoryRepository categoryRepository)
+    public CategoryService(ICategoryRepository categoryRepository,IRedisService redisService)
     {
         _categoryRepository = categoryRepository;
+        _redisService = redisService;
     }
 
     public async Task<BaseResponse<CategoryGetDto>> GetByIdAsync(Guid id)
@@ -94,6 +97,11 @@ public class CategoryService : ICategoryService
             return new BaseResponse<List<CategoryGetDto>>("Search text is required", null, HttpStatusCode.BadRequest);
 
         var loweredSearch = search.Trim().ToLower();
+        var cacheKey = $"search:categories:{loweredSearch}";
+
+        var cached = await _redisService.GetAsync<List<CategoryGetDto>>(cacheKey);
+        if (cached is not null && cached.Any())
+            return new BaseResponse<List<CategoryGetDto>>("From Redis Cache", cached, HttpStatusCode.OK);
 
         var categories = await _categoryRepository
             .GetAll(true)
@@ -106,8 +114,11 @@ public class CategoryService : ICategoryService
         if (dtos.Count == 0)
             return new BaseResponse<List<CategoryGetDto>>("No categories found", dtos, HttpStatusCode.NotFound);
 
-        return new BaseResponse<List<CategoryGetDto>>("Success", dtos, HttpStatusCode.OK);
+        await _redisService.SetAsync(cacheKey, dtos, TimeSpan.FromMinutes(30));
+
+        return new BaseResponse<List<CategoryGetDto>>("From DB", dtos, HttpStatusCode.OK);
     }
+
 
     public async Task<BaseResponse<bool>> DeleteAsync(Guid id)
     {

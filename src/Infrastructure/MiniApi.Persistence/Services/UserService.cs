@@ -37,6 +37,7 @@ public class UserService : IUserService
     private readonly IFavouriteRepository _favouriteRepository;
     private readonly IReviewRepository _reviewRepository;
     private readonly IProductRepository _productRepository;
+    private readonly IRedisService _redisService;
 
     public UserService(UserManager<AppUser> userManager,
         SignInManager<AppUser> singInManager,
@@ -46,7 +47,8 @@ public class UserService : IUserService
         IOrderRepository orderRepository,
         IFavouriteRepository favouriteRepository,
         IReviewRepository reviewRepository,
-        IProductRepository productRepository)
+        IProductRepository productRepository,
+        IRedisService redisService)
     {
         _userManager = userManager;
         _singInManager = singInManager;
@@ -57,6 +59,7 @@ public class UserService : IUserService
         _favouriteRepository = favouriteRepository;
         _reviewRepository = reviewRepository;
         _productRepository = productRepository;
+        _redisService = redisService;
     }
     public async Task<BaseResponse<string>> Register(UserRegisterDto dto)
     {
@@ -470,5 +473,26 @@ public class UserService : IUserService
 
         return new BaseResponse<UserFullProfileDto>("Success", response, HttpStatusCode.OK);
     }
+
+    public async Task<BaseResponse<string>> LogoutAsync(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        if (!handler.CanReadToken(token))
+            return new("Invalid token", HttpStatusCode.BadRequest);
+
+        var jwt = handler.ReadJwtToken(token);
+
+        // Tokenin expiration tarixi
+        var expiry = jwt.ValidTo.ToUniversalTime() - DateTime.UtcNow;
+
+        if (expiry <= TimeSpan.Zero)
+            return new("Token already expired", HttpStatusCode.BadRequest);
+
+        // Redis-ə yazılır (TTL olaraq tokenin bitmə vaxtı)
+        await _redisService.SetAsync($"blacklist:{token}", true, expiry);
+
+        return new("Logged out successfully, token blacklisted", HttpStatusCode.OK);
+    }
+
 
 }

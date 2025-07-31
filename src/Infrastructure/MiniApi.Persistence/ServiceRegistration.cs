@@ -33,7 +33,7 @@ public static class ServiceRegistration
         services.AddScoped<IFavouriteService, FavouriteService>();
         services.AddScoped<IUserContextService, UserContextService>();
         services.AddScoped<IReviewService, ReviewService>();
-
+        services.AddScoped<IRedisService, RedisService>();
 
     }
 }
